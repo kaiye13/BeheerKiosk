@@ -87,6 +87,8 @@ public class SyncService(
                     newInvoices = invoiceCount.Value;
                     await SetLastRunAsync(BillitKey, now, ct);
                 }
+                var repaired = await TryAsync(messages, "Billit-PDF's", async () => await RestoreMissingPdfsAsync(ct));
+                if (repaired > 0) messages.Add($"{repaired} factuur-PDF('s) opnieuw opgehaald bij Billit.");
             }
 
             await db.SaveChangesAsync(ct);
@@ -410,6 +412,36 @@ public class SyncService(
             count++;
         }
         return count;
+    }
+
+    /// <summary>
+    /// Billit-facturen waarvan de PDF ontbreekt (bv. op een nieuwe server, of als het ophalen eerder mislukte)
+    /// opnieuw bij Billit ophalen. Max. 100 per sync, zodat een grote achterstand gespreid gebeurt.
+    /// </summary>
+    private async Task<int> RestoreMissingPdfsAsync(CancellationToken ct)
+    {
+        var candidates = await db.PurchaseInvoices
+            .Where(i => i.Source == "Billit" && i.ExternalId != null)
+            .OrderByDescending(i => i.InvoiceDate)
+            .ToListAsync(ct);
+        var missing = candidates
+            .Where(i => i.StoredFileName is null || !File.Exists(Path.Combine(paths.UploadDirectory, i.StoredFileName)))
+            .Take(100)
+            .ToList();
+        var restored = 0;
+        foreach (var invoice in missing)
+        {
+            var hadFile = invoice.StoredFileName;
+            if (await billit.GetPdfFileIdAsync(invoice.ExternalId!, ct) is not { } fileId) continue;
+            await AttachPdfAsync(invoice, fileId, ct);
+            if (invoice.StoredFileName != hadFile) restored++;
+        }
+        if (restored > 0)
+        {
+            await db.SaveChangesAsync(ct);
+            log.LogInformation("{Count} Billit-PDF's opnieuw opgehaald", restored);
+        }
+        return restored;
     }
 
     /// <summary>PDF van Billit ophalen en bewaren bij de factuur. Lukt dat niet, dan blijft de factuur zonder bestand.</summary>

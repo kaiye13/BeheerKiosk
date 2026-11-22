@@ -86,6 +86,14 @@ public class BillitClient(HttpClient http, IOptions<IntegrationOptions> options,
             Str(Obj(o, "OrderPDF"), "FileID"));
     }
 
+    /// <summary>PDF-bestand van een al geïmporteerde factuur (ExternalId "billit-&lt;OrderID&gt;"), om een ontbrekende PDF opnieuw op te halen.</summary>
+    public async Task<string?> GetPdfFileIdAsync(string externalId, CancellationToken ct)
+    {
+        var orderId = externalId.StartsWith("billit-") ? externalId["billit-".Length..] : externalId;
+        using var doc = await GetJsonAsync($"{BaseUrl}/v1/orders/{Uri.EscapeDataString(orderId)}", ct);
+        return Str(Obj(doc.RootElement, "OrderPDF"), "FileID");
+    }
+
     public async Task<(string FileName, byte[] Content)?> DownloadFileAsync(string fileId, CancellationToken ct)
     {
         using var doc = await GetJsonAsync($"{BaseUrl}/v1/files/{Uri.EscapeDataString(fileId)}", ct);

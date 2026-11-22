@@ -96,6 +96,8 @@ public interface IBillitClient
     /// <summary>PDF van een document (null als er geen is).</summary>
     Task<(string FileName, byte[] Content)?> DownloadFileAsync(string fileId, CancellationToken ct) =>
         Task.FromResult<(string FileName, byte[] Content)?>(null);
+    /// <summary>PDF-bestand (FileID) van een al geïmporteerd document, om het opnieuw op te halen.</summary>
+    Task<string?> GetPdfFileIdAsync(string externalId, CancellationToken ct) => Task.FromResult<string?>(null);
     bool IsConfigured => true;
 }
 
