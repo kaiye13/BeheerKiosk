@@ -20,6 +20,8 @@ if ($kept) {
     Write-Host "dist/Server/appsettings.json behouden (niet overschreven)." -ForegroundColor Yellow
 }
 dotnet publish src/Boekhouding.Client @common -o dist/Client
+# De laatste versie van de boekhoud-app ook in de hoofdmap (die gaat mee in git, als download).
+Copy-Item dist/Client/ShipRipperBoekhouding.exe . -Force
 Copy-Item install-server.ps1, uninstall-server.ps1 dist/Server -Force
 
 Write-Host ""
