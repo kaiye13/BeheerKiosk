@@ -101,11 +101,25 @@ builder.Services.AddHostedService<SyncBackgroundService>();
 
 var app = builder.Build();
 
-using (var scope = app.Services.CreateScope())
+// Database klaarzetten. Lukt dat niet (bv. Azure SQL-firewall), dan start de server tóch, zodat
+// /api/health de reden toont in plaats van dat Azure enkel "503" geeft.
+string? databaseError = null;
+var databaseKind = string.IsNullOrWhiteSpace(sqlConnection) ? "SQLite" : "Azure SQL";
+try
 {
+    using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    await SchemaGuard.EnsureAsync(db, useDummy, app.Logger);
+    await SchemaGuard.EnsureAsync(db, useDummy, app.Logger).WaitAsync(TimeSpan.FromSeconds(75));
     if (useDummy) await DummySeeder.SeedAsync(db, scope.ServiceProvider.GetRequiredService<PurchaseService>());
+}
+catch (Exception ex)
+{
+    var messages = new List<string>();
+    for (var e = ex; e is not null; e = e.InnerException) messages.Add(e.Message);
+    databaseError = ex is TimeoutException
+        ? $"{databaseKind} antwoordt niet binnen 75 s (firewall of netwerk?)."
+        : string.Join(" → ", messages.Distinct());
+    app.Logger.LogError(ex, "Database niet klaar bij het opstarten ({Kind})", databaseKind);
 }
 
 // Fouten uit validatie → 400 met leesbare melding voor de client.
@@ -134,7 +148,14 @@ app.Use(async (ctx, next) =>
 
 var api = app.MapGroup("/api");
 
-api.MapGet("/health", (IOptions<IntegrationOptions> o) => new { status = "ok", dummy = o.Value.UseDummyData, time = DateTime.Now });
+api.MapGet("/health", (IOptions<IntegrationOptions> o) => new
+{
+    status = databaseError is null ? "ok" : "fout",
+    database = databaseKind,
+    databaseError,
+    dummy = o.Value.UseDummyData,
+    time = DateTime.Now,
+});
 
 // ---------- Producten & voorraad ----------
 
