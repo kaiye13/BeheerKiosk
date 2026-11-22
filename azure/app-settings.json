@@ -18,5 +18,15 @@
     "name": "TZ",
     "value": "Europe/Brussels",
     "slotSetting": false
+  },
+  {
+    "name": "Integrations__TikTokAppKey",
+    "value": "6konrj8vvnkq2",
+    "slotSetting": false
+  },
+  {
+    "name": "Integrations__TikTokAppSecret",
+    "value": "306875b5a9c5f890fe031ef9806ed624d14952d2",
+    "slotSetting": false
   }
 ]
