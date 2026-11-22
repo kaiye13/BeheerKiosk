@@ -13,7 +13,18 @@ var builder = WebApplication.CreateBuilder(new WebApplicationOptions
 });
 builder.Services.AddWindowsService(o => o.ServiceName = "ShipRipperBoekhouding");
 
+// Azure App Service: de poort komt van Azure (Linux: PORT / ASPNETCORE_HTTP_PORTS, meestal 8080).
+// "Urls" uit appsettings.json (http://0.0.0.0:5080, voor de lokale server) mag die niet overschrijven,
+// anders antwoordt de app nooit en geeft Azure 503. Op Windows (IIS in-process) heeft dit geen effect.
+if (Environment.GetEnvironmentVariable("WEBSITE_SITE_NAME") is not null)
+{
+    var port = Environment.GetEnvironmentVariable("PORT") ?? Environment.GetEnvironmentVariable("ASPNETCORE_HTTP_PORTS") ?? "8080";
+    builder.WebHost.UseUrls($"http://+:{port.Split(';')[0]}");
+}
+
+// Datamap; "%HOME%\data\…" werkt zo op Windows én Linux (backslashes worden de juiste scheidingstekens).
 var dataDir = Environment.ExpandEnvironmentVariables(builder.Configuration["Storage:DataDirectory"] ?? @"%ProgramData%\ShipRipperBoekhouding");
+if (!OperatingSystem.IsWindows()) dataDir = dataDir.Replace('\\', '/');
 var uploadDir = Path.Combine(dataDir, "uploads");
 Directory.CreateDirectory(uploadDir);
 
