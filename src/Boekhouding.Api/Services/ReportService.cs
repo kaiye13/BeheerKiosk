@@ -18,9 +18,11 @@ public class ReportService(AppDbContext db)
     /// <summary>Orders met datum in [from, to).</summary>
     public async Task<List<SalesOrder>> GetOrdersAsync(DateTime from, DateTime to, CancellationToken ct = default)
     {
+        // Producten één keer laden (enkele tientallen) i.p.v. per verkoopregel opnieuw (met lange omschrijving):
+        // EF koppelt ze vanzelf aan de regels. Scheelt op Azure SQL seconden bij een jaaroverzicht.
+        await db.Products.LoadAsync(ct);
         return await db.SalesOrders
             .Include(o => o.Lines).ThenInclude(l => l.Allocations)
-            .Include(o => o.Lines).ThenInclude(l => l.Product)
             .Where(o => o.OrderDate >= from && o.OrderDate < to)
             .OrderBy(o => o.OrderDate)
             .AsSplitQuery()
