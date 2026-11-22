@@ -18,7 +18,25 @@ var uploadDir = Path.Combine(dataDir, "uploads");
 Directory.CreateDirectory(uploadDir);
 
 builder.Services.AddSingleton(new AppPaths(dataDir, uploadDir));
-builder.Services.AddDbContext<AppDbContext>(o => o.UseSqlite($"Data Source={Path.Combine(dataDir, "boekhouding.db")}"));
+// Database: met ConnectionStrings:Default (Azure: Verbindingsreeksen → "Default", type SQLAzure) Azure SQL,
+// anders het SQLite-bestand in de datamap.
+var sqlConnection = builder.Configuration.GetConnectionString("Default");
+var sqlitePath = Path.Combine(dataDir, "boekhouding.db");
+if (!string.IsNullOrWhiteSpace(sqlConnection))
+    builder.Services.AddDbContext<AppDbContext, SqlServerDbContext>(o =>
+        o.UseSqlServer(sqlConnection, sql => sql.EnableRetryOnFailure()));
+else
+    builder.Services.AddDbContext<AppDbContext>(o => o.UseSqlite($"Data Source={sqlitePath}"));
+
+// Eenmalig: bestaande SQLite-database overzetten naar Azure SQL en stoppen.
+//   ShipRipperServer.exe --import-sqlite "C:\ProgramData\ShipRipperBoekhouding\boekhouding.db"
+if (args.SkipWhile(a => a != "--import-sqlite").Skip(1).FirstOrDefault() is { } importFrom)
+{
+    if (string.IsNullOrWhiteSpace(sqlConnection))
+        throw new InvalidOperationException("Zet eerst ConnectionStrings:Default (de Azure SQL-verbindingsreeks).");
+    await SqliteImport.RunAsync(importFrom, sqlConnection);
+    return;
+}
 builder.Services.Configure<IntegrationOptions>(builder.Configuration.GetSection(IntegrationOptions.Section));
 builder.Services.Configure<CompanyOptions>(builder.Configuration.GetSection(CompanyOptions.Section));
 

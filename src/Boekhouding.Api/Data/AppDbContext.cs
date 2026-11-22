@@ -2,7 +2,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Boekhouding.Api.Data;
 
-public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
+/// <summary>
+/// De database van de boekhouding. Lokaal (en in de tests) SQLite; met een verbindingsreeks
+/// (ConnectionStrings:Default) Azure SQL via <see cref="SqlServerDbContext"/>, met eigen migraties.
+/// </summary>
+public class AppDbContext(DbContextOptions options) : DbContext(options)
 {
     public DbSet<Product> Products => Set<Product>();
     public DbSet<StockLot> StockLots => Set<StockLot>();

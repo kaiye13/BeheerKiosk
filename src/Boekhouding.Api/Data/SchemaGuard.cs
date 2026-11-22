@@ -75,6 +75,13 @@ public static class SchemaGuard
                 cmd.CommandText = sql;
                 return Convert.ToInt64(await cmd.ExecuteScalarAsync());
             }
+            if (!db.Database.IsSqlite())
+            {
+                // Azure SQL: altijd via migraties aangemaakt (of leeg).
+                var userTables = await Scalar("SELECT count(*) FROM sys.tables WHERE name <> '__EFMigrationsHistory'");
+                var efHistory = await Scalar("SELECT count(*) FROM sys.tables WHERE name = '__EFMigrationsHistory'");
+                return (userTables, efHistory > 0);
+            }
             var tables = await Scalar("SELECT count(*) FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name <> '__EFMigrationsHistory'");
             var history = await Scalar("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='__EFMigrationsHistory'");
             return (tables, history > 0);

@@ -69,6 +69,10 @@ jobs:
           for s in Security__ApiKey Storage__DataDirectory WEBSITE_TIME_ZONE; do
             echo "$names" | grep -qx "$s" || missing="$missing $s"
           done
+          # Database: verbindingsreeks "Default" (Verbindingsreeksen, type SQLAzure). Zonder die reeks zou de
+          # server een lege SQLite-database beginnen in plaats van Azure SQL te gebruiken.
+          cs=$(az webapp config connection-string list --name tcgkiosk --resource-group "$rg" --query "[?name=='Default'].name" -o tsv)
+          [ "$cs" = "Default" ] || missing="$missing Verbindingsreeks:Default(SQLAzure)"
           if [ -n "$missing" ]; then
             echo "::error::Zet eerst deze app-instellingen in Azure (Web app → Instellingen → Omgevingsvariabelen):$missing"
             exit 1
