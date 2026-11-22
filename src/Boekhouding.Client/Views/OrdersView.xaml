@@ -1,0 +1,61 @@
+<UserControl x:Class="Boekhouding.Client.Views.OrdersView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:v="clr-namespace:Boekhouding.Client.Views">
+    <DockPanel>
+        <DockPanel DockPanel.Dock="Top" Margin="0,0,0,14">
+            <StackPanel>
+                <TextBlock Text="Verkopen" Style="{StaticResource PageTitle}"/>
+                <TextBlock x:Name="Summary" Style="{StaticResource MutedText}"/>
+            </StackPanel>
+        </DockPanel>
+        <Border DockPanel.Dock="Top" Style="{StaticResource CardBorder}" Padding="12,10" Margin="0,0,0,10">
+            <WrapPanel>
+                <StackPanel Margin="0,0,16,4">
+                    <TextBlock Text="Periode (orderdatum)" Style="{StaticResource FieldLabel}" Margin="0,0,0,3"/>
+                    <v:PeriodPicker x:Name="Period"/>
+                </StackPanel>
+                <StackPanel Margin="0,0,16,4">
+                    <TextBlock Text="Klant, order of artikel" Style="{StaticResource FieldLabel}" Margin="0,0,0,3"/>
+                    <TextBox x:Name="Search" Width="200" TextChanged="Filter_Changed"/>
+                </StackPanel>
+                <StackPanel Margin="0,0,16,4">
+                    <TextBlock Text="Bedrag van – tot" Style="{StaticResource FieldLabel}" Margin="0,0,0,3"/>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBox x:Name="MinAmount" Width="80" TextChanged="Filter_Changed"/>
+                        <TextBlock Text="–" VerticalAlignment="Center" Margin="6,0"/>
+                        <TextBox x:Name="MaxAmount" Width="80" TextChanged="Filter_Changed"/>
+                    </StackPanel>
+                </StackPanel>
+                <StackPanel Margin="0,0,16,4">
+                    <TextBlock Text="Kanaal" Style="{StaticResource FieldLabel}" Margin="0,0,0,3"/>
+                    <ComboBox x:Name="ChannelFilter" Width="150" SelectionChanged="Filter_Changed"/>
+                </StackPanel>
+            </WrapPanel>
+        </Border>
+        <Border Style="{StaticResource CardBorder}" Padding="0">
+            <DataGrid x:Name="Grid" BorderThickness="0" MouseDoubleClick="Order_DoubleClick">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Datum" Binding="{Binding OrderDate, StringFormat='dd/MM/yyyy HH:mm'}" Width="120"/>
+                    <DataGridTextColumn Header="Order" Binding="{Binding OrderNumber}" Width="80"/>
+                    <DataGridTextColumn Header="Kanaal" Binding="{Binding Channel, Converter={StaticResource EnumLabel}}" Width="110"/>
+                    <DataGridTextColumn Header="Klant" Binding="{Binding CustomerName}" Width="140"/>
+                    <DataGridTemplateColumn Header="Artikelen (klik voor details)" Width="*" CellTemplate="{StaticResource ItemsLink}"/>
+                    <DataGridTextColumn Header="Verzending" Binding="{Binding ShippingIncl, StringFormat=C}" Width="85" ElementStyle="{StaticResource RightCell}"/>
+                    <DataGridTextColumn Header="Totaal" Binding="{Binding TotalIncl, StringFormat=C}" Width="90" ElementStyle="{StaticResource RightCell}"/>
+                    <DataGridTextColumn Header="Marge" Binding="{Binding MarginRevenue, StringFormat=C}" Width="85" ElementStyle="{StaticResource RightCell}"/>
+                    <DataGridTextColumn Header="Factuur" Binding="{Binding InvoiceRevenue, StringFormat=C}" Width="85" ElementStyle="{StaticResource RightCell}"/>
+                    <DataGridTextColumn Header="Btw" Binding="{Binding VatDue, StringFormat=C}" Width="80" ElementStyle="{StaticResource RightCell}"/>
+                    <DataGridTemplateColumn Header="" Width="30">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="⚠" Foreground="#B45309" ToolTip="Verkocht zonder gekende voorraad: belast aan 21% op de volledige prijs"
+                                           Visibility="{Binding HasStockWarning, Converter={StaticResource BoolToVis}}"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
+    </DockPanel>
+</UserControl>

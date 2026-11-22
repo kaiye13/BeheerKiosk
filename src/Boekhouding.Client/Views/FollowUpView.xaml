@@ -1,0 +1,99 @@
+<UserControl x:Class="Boekhouding.Client.Views.FollowUpView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <DockPanel>
+        <DockPanel DockPanel.Dock="Top" Margin="0,0,0,14">
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBox x:Name="Search" Width="200" Margin="0,0,8,0" TextChanged="Filter_Changed" ToolTip="Zoek op klant, ordernummer of tracking"/>
+                <ComboBox x:Name="StageFilter" Width="160" Margin="0,0,8,0" SelectionChanged="Filter_Changed"/>
+                <ComboBox x:Name="ChannelFilter" Width="130" Margin="0,0,8,0" SelectionChanged="Filter_Changed"/>
+                <ComboBox x:Name="DaysFilter" Width="110" SelectionChanged="Days_Changed">
+                    <ComboBoxItem Content="7 dagen" Tag="7"/>
+                    <ComboBoxItem Content="30 dagen" Tag="30" IsSelected="True"/>
+                    <ComboBoxItem Content="90 dagen" Tag="90"/>
+                </ComboBox>
+            </StackPanel>
+            <StackPanel>
+                <TextBlock Text="Orderopvolging" Style="{StaticResource PageTitle}"/>
+                <TextBlock x:Name="Summary" Style="{StaticResource MutedText}"/>
+            </StackPanel>
+        </DockPanel>
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="16"/>
+                <ColumnDefinition Width="330"/>
+            </Grid.ColumnDefinitions>
+            <Border Style="{StaticResource CardBorder}" Padding="0">
+                <DataGrid x:Name="Grid" BorderThickness="0" SelectionChanged="Grid_SelectionChanged" MouseDoubleClick="Order_DoubleClick">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Datum" Binding="{Binding OrderDate, StringFormat='dd/MM HH:mm'}" Width="90"/>
+                        <DataGridTextColumn Header="Order" Binding="{Binding OrderNumber}" Width="75"/>
+                        <DataGridTemplateColumn Header="Waar besteld" Width="95" CellTemplate="{StaticResource ChannelBadge}"/>
+                        <DataGridTextColumn Header="Klant" Binding="{Binding CustomerName}" Width="130"/>
+                        <DataGridTemplateColumn Header="Artikelen (klik voor details)" Width="*" CellTemplate="{StaticResource ItemsLink}"/>
+                        <DataGridTemplateColumn Header="Verzending" Width="135" CellTemplate="{StaticResource ShippingBadge}"/>
+                        <DataGridTemplateColumn Header="Status" Width="110" SortMemberPath="Stage">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock x:Name="t" Text="{Binding Stage, Converter={StaticResource EnumLabel}}" FontWeight="SemiBold"/>
+                                    <DataTemplate.Triggers>
+                                        <DataTrigger Binding="{Binding Stage}" Value="Delivered"><Setter TargetName="t" Property="Foreground" Value="#059669"/></DataTrigger>
+                                        <DataTrigger Binding="{Binding Stage}" Value="Shipped"><Setter TargetName="t" Property="Foreground" Value="#2563EB"/></DataTrigger>
+                                        <DataTrigger Binding="{Binding Stage}" Value="Problem"><Setter TargetName="t" Property="Foreground" Value="#B91C1C"/></DataTrigger>
+                                        <DataTrigger Binding="{Binding Stage}" Value="Saving"><Setter TargetName="t" Property="Foreground" Value="#92400E"/></DataTrigger>
+                                    </DataTemplate.Triggers>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTextColumn Header="Tracking" Binding="{Binding TrackingStatus}" Width="80"/>
+                        <DataGridTemplateColumn Header="Klacht" Width="55">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock x:Name="t" Text="{Binding OpenComplaints}" HorizontalAlignment="Center" Foreground="#B91C1C" FontWeight="Bold"/>
+                                    <DataTemplate.Triggers>
+                                        <DataTrigger Binding="{Binding OpenComplaints}" Value="0"><Setter TargetName="t" Property="Text" Value="–"/><Setter TargetName="t" Property="Foreground" Value="#D1D5DB"/></DataTrigger>
+                                    </DataTemplate.Triggers>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                    <DataGrid.RowStyle>
+                        <Style TargetType="DataGridRow">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Stage}" Value="Problem"><Setter Property="Background" Value="#FEF2F2"/></DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGrid.RowStyle>
+                </DataGrid>
+            </Border>
+
+            <Border Grid.Column="2" Style="{StaticResource CardBorder}" VerticalAlignment="Top">
+                <StackPanel x:Name="Editor" IsEnabled="False">
+                    <TextBlock x:Name="EditorTitle" Text="Selecteer een order" Style="{StaticResource SectionTitle}"/>
+                    <TextBlock x:Name="EditorInfo" Style="{StaticResource MutedText}" TextWrapping="Wrap" FontSize="12"/>
+                    <TextBlock Text="Status" Style="{StaticResource FieldLabel}"/>
+                    <ComboBox x:Name="StageBox"/>
+                    <TextBlock Text="Vervoerder" Style="{StaticResource FieldLabel}"/>
+                    <ComboBox x:Name="CarrierBox" IsEditable="True">
+                        <ComboBoxItem Content="bpost"/>
+                        <ComboBoxItem Content="PostNL"/>
+                        <ComboBoxItem Content="DPD"/>
+                        <ComboBoxItem Content="GLS"/>
+                        <ComboBoxItem Content="DHL"/>
+                    </ComboBox>
+                    <TextBlock Text="Trackingnummer" Style="{StaticResource FieldLabel}"/>
+                    <TextBox x:Name="TrackingBox"/>
+                    <TextBlock x:Name="TrackingInfo" FontSize="12" Margin="0,4,0,0" TextWrapping="Wrap"/>
+                    <TextBlock Text="Interne notities" Style="{StaticResource FieldLabel}"/>
+                    <TextBox x:Name="NotesBox" Height="70" AcceptsReturn="True" TextWrapping="Wrap" VerticalContentAlignment="Top"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,16,0,0">
+                        <Button x:Name="SaveButton" Content="Opslaan" Style="{StaticResource PrimaryButton}" Click="Save_Click"/>
+                        <Button x:Name="TrackButton" Content="Tracking openen" Click="Track_Click" Margin="0"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </DockPanel>
+</UserControl>

@@ -1,0 +1,52 @@
+<UserControl x:Class="Boekhouding.Client.Views.ProductsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <DockPanel>
+        <DockPanel DockPanel.Dock="Top" Margin="0,0,0,14">
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBox x:Name="Search" Width="180" Margin="0,0,10,0" TextChanged="Search_Changed" ToolTip="Zoek op naam, SKU, merk of tag"/>
+                <Button Content="✎ Bewerken" Click="Edit_Click" ToolTip="Prijs, titel, status, … aanpassen (of dubbelklik)"/>
+                <Button x:Name="DeactivateButton" Content="Inactief zetten" Click="Deactivate_Click" ToolTip="Niet meer zichtbaar in de winkel (Shopify: concept). Geschiedenis blijft."/>
+                <Button x:Name="ActivateButton" Content="Actief zetten" Click="Activate_Click" ToolTip="Terug zichtbaar in de winkel"/>
+                <Button x:Name="ImportButton" Content="⟳ Ophalen uit Shopify" Click="Import_Click"/>
+                <Button x:Name="PushButton" Content="↑ Naar Shopify" Click="Push_Click" ToolTip="Geselecteerd product aanmaken of bijwerken in Shopify"/>
+                <Button Content="Aankoop invoeren" Click="New_Click" ToolTip="Product met voorraad uit een aankoop (marge of factuur)"/>
+                <Button Content="+ Vrij product" Style="{StaticResource PrimaryButton}" Click="NewFree_Click" Margin="0"
+                        ToolTip="Product zonder aankoop: mystery pack, single, bundel, ... alle velden vrij"/>
+            </StackPanel>
+            <StackPanel>
+                <TextBlock Text="Producten" Style="{StaticResource PageTitle}"/>
+                <TextBlock Style="{StaticResource MutedText}" Text="Dubbelklik op een product om het aan te passen. Producten komen automatisch om de 6 uur uit Shopify; ✓ = gekoppeld aan Shopify."/>
+            </StackPanel>
+        </DockPanel>
+        <Border Style="{StaticResource CardBorder}" Padding="0">
+            <DataGrid x:Name="Grid" BorderThickness="0" MouseDoubleClick="Grid_DoubleClick">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="SKU" Binding="{Binding Sku}" Width="140"/>
+                    <DataGridTextColumn Header="Titel" Binding="{Binding Title}" Width="*"/>
+                    <DataGridTextColumn Header="Merk" Binding="{Binding Vendor}" Width="100"/>
+                    <DataGridTextColumn Header="Type" Binding="{Binding ProductType}" Width="120"/>
+                    <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="70"/>
+                    <DataGridTemplateColumn Header="Shopify" Width="60" SortMemberPath="ShopifyProductId">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock x:Name="t" Text="✓" Foreground="#059669" FontWeight="Bold" HorizontalAlignment="Center"/>
+                                <DataTemplate.Triggers>
+                                    <DataTrigger Binding="{Binding ShopifyProductId}" Value="{x:Null}">
+                                        <Setter TargetName="t" Property="Text" Value="–"/>
+                                        <Setter TargetName="t" Property="Foreground" Value="#D1D5DB"/>
+                                    </DataTrigger>
+                                </DataTemplate.Triggers>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTextColumn Header="Prijs" Binding="{Binding Price, StringFormat=C}" Width="85" ElementStyle="{StaticResource RightCell}"/>
+                    <DataGridTextColumn Header="Marge st." Binding="{Binding StockMargin}" Width="75" ElementStyle="{StaticResource RightCell}"/>
+                    <DataGridTextColumn Header="Factuur st." Binding="{Binding StockInvoice}" Width="80" ElementStyle="{StaticResource RightCell}"/>
+                    <DataGridTextColumn Header="Totaal" Binding="{Binding StockTotal}" Width="65" ElementStyle="{StaticResource RightCell}"/>
+                    <DataGridTextColumn Header="Voorraadwaarde" Binding="{Binding StockValue, StringFormat=C}" Width="110" ElementStyle="{StaticResource RightCell}"/>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
+    </DockPanel>
+</UserControl>

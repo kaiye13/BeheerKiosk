@@ -1,0 +1,106 @@
+<Window x:Class="Boekhouding.Client.Views.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Instellingen" Width="560" SizeToContent="Height" ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner" FontFamily="Segoe UI" FontSize="13" Background="White">
+    <StackPanel Margin="20">
+        <TabControl Padding="16" MinHeight="420">
+            <TabItem Header="  Server  " Padding="8,5">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource MutedText}" TextWrapping="Wrap"
+                               Text="Adres van de pc waarop de Boekhouding-server draait, bv. http://192.168.1.50:5080. Op de server-pc zelf: http://localhost:5080."/>
+                    <TextBlock Text="Server-adres" Style="{StaticResource FieldLabel}"/>
+                    <TextBox x:Name="UrlBox"/>
+                    <TextBlock Text="API-sleutel (Security:ApiKey in appsettings.json van de server)" Style="{StaticResource FieldLabel}"/>
+                    <PasswordBox x:Name="KeyBox" Padding="6,5"/>
+                    <Button Content="Test verbinding" Click="Test_Click" HorizontalAlignment="Left" Margin="0,14,0,0"/>
+                    <TextBlock x:Name="TestResult" Margin="0,10,0,0" TextWrapping="Wrap"/>
+                </StackPanel>
+            </TabItem>
+
+            <TabItem Header="  Labelprinter  " Padding="8,5">
+                <StackPanel>
+                    <TextBlock Text="Printer (Brother QL / PT)" Style="{StaticResource FieldLabel}" Margin="0,0,0,3"/>
+                    <ComboBox x:Name="PrinterBox" IsEditable="True"/>
+                    <TextBlock Text="Rol in de printer" Style="{StaticResource FieldLabel}"/>
+                    <ComboBox x:Name="RollBox" SelectionChanged="Roll_Changed"
+                              ToolTip="Kies de Brother DK-rol: de afmetingen worden ingevuld. Voor een doorlopende rol kies je zelf de lengte."/>
+                    <Grid Margin="0,0,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition/><ColumnDefinition Width="12"/><ColumnDefinition/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Text="Labelbreedte (mm)" Style="{StaticResource FieldLabel}"/>
+                            <TextBox x:Name="WidthBox"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="Labelhoogte (mm)" Style="{StaticResource FieldLabel}"/>
+                            <TextBox x:Name="HeightBox"/>
+                        </StackPanel>
+                    </Grid>
+                    <TextBlock Text="P-touch Editor-sjabloon (.lbx), optioneel" Style="{StaticResource FieldLabel}"/>
+                    <DockPanel>
+                        <Button DockPanel.Dock="Right" Content="Bladeren…" Click="BrowseTemplate_Click" Margin="8,0,0,0"/>
+                        <TextBox x:Name="TemplateBox"/>
+                    </DockPanel>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition/><ColumnDefinition Width="12"/><ColumnDefinition/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Text="Objectnaam voor de naam" Style="{StaticResource FieldLabel}"/>
+                            <TextBox x:Name="NameObjectBox"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="Objectnaam voor orders/verzending" Style="{StaticResource FieldLabel}"/>
+                            <TextBox x:Name="InfoObjectBox"/>
+                        </StackPanel>
+                    </Grid>
+                    <TextBlock Style="{StaticResource MutedText}" FontSize="12" TextWrapping="Wrap" Margin="0,10,0,0"
+                               Text="Zonder sjabloon print de app zelf een label (naam groot, orders, verzendstatus) via de Windows-driver. Met een sjabloon gebruikt de app Brother b-PAC: maak in P-touch Editor tekstobjecten met de namen hierboven (Eigenschappen → Algemeen → Objectnaam) en installeer de 64-bit b-PAC Client Component."/>
+                    <CheckBox x:Name="PrintQueueBox" Margin="0,12,0,0" FontWeight="SemiBold"
+                              Content="Labels van de rip-wachtrij meteen automatisch printen"
+                              ToolTip="Aan: bij Nu rippen print deze pc het label meteen (zet dit op één pc: die met de Brother-printer). Uit: de naam komt klaar te staan naast 🖨 Print label in het streamscherm, en je print zelf."/>
+                    <DockPanel Margin="0,12,0,0">
+                        <Button DockPanel.Dock="Left" Content="Testlabel printen" Click="TestPrint_Click" VerticalAlignment="Top"/>
+                        <Button DockPanel.Dock="Left" Content="Voorbeeld" Click="Preview_Click" VerticalAlignment="Top"/>
+                        <Border BorderBrush="#9CA3AF" BorderThickness="1" HorizontalAlignment="Left" Margin="4,0,0,0" ToolTip="Voorbeeld zonder sjabloon">
+                            <Viewbox x:Name="PreviewBox" Height="80"/>
+                        </Border>
+                    </DockPanel>
+                </StackPanel>
+            </TabItem>
+
+            <TabItem Header="  Rip-tool  " Padding="8,5">
+                <StackPanel>
+                    <TextBlock Text="Adres van de rip-tool (leeg = http://localhost:3000/dashboard.html)" Style="{StaticResource FieldLabel}" Margin="0,0,0,3"/>
+                    <TextBox x:Name="RipUrlBox"/>
+                    <TextBlock Text="Tekst op de knop die een rip afrondt" Style="{StaticResource FieldLabel}"/>
+                    <TextBox x:Name="DoneTextBox"/>
+                    <TextBlock Text="Of CSS-selector van die knop (optioneel)" Style="{StaticResource FieldLabel}"/>
+                    <TextBox x:Name="DoneSelectorBox"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition/><ColumnDefinition Width="12"/><ColumnDefinition/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Text="CSS-selector blok per klant" Style="{StaticResource FieldLabel}"/>
+                            <TextBox x:Name="ContainerBox"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="CSS-selector klantnaam" Style="{StaticResource FieldLabel}"/>
+                            <TextBox x:Name="NameSelectorBox"/>
+                        </StackPanel>
+                    </Grid>
+                    <CheckBox x:Name="AutoPrintBox" Content="Automatisch label printen bij &quot;done rippen&quot;" Margin="0,12,0,0"/>
+                    <TextBlock Style="{StaticResource MutedText}" FontSize="12" TextWrapping="Wrap" Margin="0,10,0,0"
+                               Text="De app luistert in de rip-pagina naar een klik op de knop, zoekt het blok van die klant en leest daaruit de naam. De selectors vind je met F12 (Inspect) in de browser op de rip-pagina. Wijzigingen gelden na het herladen van het stream-dashboard."/>
+                </StackPanel>
+            </TabItem>
+        </TabControl>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+            <Button Content="Annuleren" IsCancel="True"/>
+            <Button Content="Opslaan" Style="{StaticResource PrimaryButton}" IsDefault="True" Click="Save_Click" Margin="0"/>
+        </StackPanel>
+    </StackPanel>
+</Window>

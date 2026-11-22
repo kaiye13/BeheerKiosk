@@ -1,0 +1,88 @@
+<UserControl x:Class="Boekhouding.Client.Views.OverviewView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:v="clr-namespace:Boekhouding.Client.Views">
+    <DockPanel>
+        <DockPanel DockPanel.Dock="Top" Margin="0,0,0,14">
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBox x:Name="Search" Width="220" Margin="0,0,10,0" TextChanged="Filter_Changed" ToolTip="Zoek op SKU, artikel of bron"/>
+                <ComboBox x:Name="RegimeFilter" Width="150" Margin="0,0,10,0" SelectionChanged="Filter_Changed">
+                    <ComboBoxItem Content="Marge + factuur" IsSelected="True"/>
+                    <ComboBoxItem Content="Enkel marge"/>
+                    <ComboBoxItem Content="Enkel factuur"/>
+                </ComboBox>
+                <CheckBox x:Name="OnlyInStock" Content="Enkel in voorraad" VerticalAlignment="Center" IsChecked="True"
+                          Checked="Filter_Changed" Unchecked="Filter_Changed"/>
+            </StackPanel>
+            <StackPanel>
+                <TextBlock Text="Overzicht alle goederen" Style="{StaticResource PageTitle}"/>
+                <TextBlock Style="{StaticResource MutedText}" TextWrapping="Wrap" Text="Elke aankoop is een partij. Bij verkoop gaan margegoederen eerst af, daarna factuurgoederen (oudste eerst)."/>
+            </StackPanel>
+        </DockPanel>
+
+        <UniformGrid x:Name="Totals" DockPanel.Dock="Top" Columns="4" Margin="-6,0,-6,10"/>
+
+        <!-- Filters -->
+        <Border DockPanel.Dock="Top" Style="{StaticResource CardBorder}" Padding="12,10" Margin="0,0,0,10">
+            <WrapPanel>
+                <StackPanel Margin="0,0,16,4">
+                    <TextBlock Text="Periode (aankoopdatum)" Style="{StaticResource FieldLabel}" Margin="0,0,0,3"/>
+                    <v:PeriodPicker x:Name="Period" InitialMode="All"/>
+                </StackPanel>
+                <StackPanel Margin="0,0,16,4">
+                    <TextBlock Text="Leverancier / bron" Style="{StaticResource FieldLabel}" Margin="0,0,0,3"/>
+                    <ComboBox x:Name="SupplierFilter" Width="240" IsEditable="True" IsTextSearchEnabled="False"
+                              ToolTip="Kies of typ (een deel van) de leverancier, verkoper of het document"/>
+                </StackPanel>
+                <StackPanel Margin="0,0,16,4">
+                    <TextBlock Text="Aankoopbedrag partij van – tot" Style="{StaticResource FieldLabel}" Margin="0,0,0,3"/>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBox x:Name="MinAmount" Width="80"/>
+                        <TextBlock Text="–" VerticalAlignment="Center" Margin="6,0"/>
+                        <TextBox x:Name="MaxAmount" Width="80"/>
+                    </StackPanel>
+                </StackPanel>
+                <Button Content="Filters wissen" Click="Reset_Click" VerticalAlignment="Bottom" Margin="0,0,0,4"/>
+            </WrapPanel>
+        </Border>
+
+        <Border DockPanel.Dock="Bottom" Style="{StaticResource CardBorder}" Padding="16,10" Margin="0,10,0,0">
+            <TextBlock x:Name="SelectionTotals" FontWeight="SemiBold" TextWrapping="Wrap"/>
+        </Border>
+
+        <Border Style="{StaticResource CardBorder}" Padding="0">
+            <DataGrid x:Name="Grid" BorderThickness="0">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Aankoop" Binding="{Binding PurchaseDate, StringFormat='dd/MM/yyyy'}" Width="90"/>
+                    <DataGridTemplateColumn Header="Regime" Width="80" SortMemberPath="Regime">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Border CornerRadius="4" Padding="6,1" HorizontalAlignment="Left">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Background" Value="#DBEAFE"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Regime}" Value="Margin">
+                                                    <Setter Property="Background" Value="#D1FAE5"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <TextBlock Text="{Binding Regime, Converter={StaticResource EnumLabel}}" FontSize="12"/>
+                                </Border>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTextColumn Header="SKU" Binding="{Binding Sku}" Width="130"/>
+                    <DataGridTextColumn Header="Artikel" Binding="{Binding ProductTitle}" Width="*"/>
+                    <DataGridTextColumn Header="Bron" Binding="{Binding Source}" Width="230"/>
+                    <DataGridTextColumn Header="Aankoop/st" Binding="{Binding UnitCost, StringFormat=C}" Width="90" ElementStyle="{StaticResource RightCell}"/>
+                    <DataGridTextColumn Header="Partij" Binding="{Binding TotalCost, StringFormat=C}" Width="90" ElementStyle="{StaticResource RightCell}"/>
+                    <DataGridTextColumn Header="Ingekocht" Binding="{Binding QuantityIn}" Width="75" ElementStyle="{StaticResource RightCell}"/>
+                    <DataGridTextColumn Header="Verkocht" Binding="{Binding QuantitySold}" Width="70" ElementStyle="{StaticResource RightCell}"/>
+                    <DataGridTextColumn Header="Resterend" Binding="{Binding QuantityRemaining}" Width="75" ElementStyle="{StaticResource RightCell}"/>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
+    </DockPanel>
+</UserControl>

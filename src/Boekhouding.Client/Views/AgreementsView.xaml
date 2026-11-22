@@ -1,0 +1,93 @@
+<UserControl x:Class="Boekhouding.Client.Views.AgreementsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:v="clr-namespace:Boekhouding.Client.Views">
+    <DockPanel>
+        <StackPanel DockPanel.Dock="Top" Margin="0,0,0,14">
+            <TextBlock Text="Verkoopovereenkomsten" Style="{StaticResource PageTitle}"/>
+            <TextBlock Style="{StaticResource MutedText}" Text="Aankoopborderels voor margegoederen gekocht van particulieren. Overeenkomsten zonder adres zijn onvolledig."/>
+        </StackPanel>
+
+        <!-- Filters -->
+        <Border DockPanel.Dock="Top" Style="{StaticResource CardBorder}" Padding="12,10" Margin="0,0,0,10">
+            <WrapPanel>
+                <StackPanel Margin="0,0,16,4">
+                    <TextBlock Text="Periode (datum)" Style="{StaticResource FieldLabel}" Margin="0,0,0,3"/>
+                    <v:PeriodPicker x:Name="Period" InitialMode="All"/>
+                </StackPanel>
+                <StackPanel Margin="0,0,16,4">
+                    <TextBlock Text="Verkoper (leverancier)" Style="{StaticResource FieldLabel}" Margin="0,0,0,3"/>
+                    <ComboBox x:Name="SellerFilter" Width="220" IsEditable="True" IsTextSearchEnabled="False"
+                              ToolTip="Kies of typ (een deel van) de naam, het adres of het nummer"/>
+                </StackPanel>
+                <StackPanel Margin="0,0,16,4">
+                    <TextBlock Text="Bedrag van – tot" Style="{StaticResource FieldLabel}" Margin="0,0,0,3"/>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBox x:Name="MinAmount" Width="80"/>
+                        <TextBlock Text="–" VerticalAlignment="Center" Margin="6,0"/>
+                        <TextBox x:Name="MaxAmount" Width="80"/>
+                    </StackPanel>
+                </StackPanel>
+                <CheckBox x:Name="OnlyMissing" Content="Enkel zonder adres" VerticalAlignment="Bottom" Margin="0,0,16,8"/>
+                <Button Content="Filters wissen" Click="Reset_Click" VerticalAlignment="Bottom" Margin="0,0,0,4"/>
+            </WrapPanel>
+        </Border>
+
+        <Border DockPanel.Dock="Bottom" Style="{StaticResource CardBorder}" Padding="16,10" Margin="0,10,0,0">
+            <TextBlock x:Name="Totals" FontWeight="SemiBold" TextWrapping="Wrap"/>
+        </Border>
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="16"/>
+                <ColumnDefinition Width="340"/>
+            </Grid.ColumnDefinitions>
+            <Border Style="{StaticResource CardBorder}" Padding="0">
+                <DataGrid x:Name="Grid" BorderThickness="0" SelectionChanged="Grid_SelectionChanged">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Nummer" Binding="{Binding Number}" Width="110"/>
+                        <DataGridTextColumn Header="Datum" Binding="{Binding Date, StringFormat='dd/MM/yyyy'}" Width="90"/>
+                        <DataGridTextColumn Header="Verkoper" Binding="{Binding SellerName}" Width="*"/>
+                        <DataGridTemplateColumn Header="Adres" Width="115">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock>
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Text" Value="✓ ok"/>
+                                                <Setter Property="Foreground" Value="#059669"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding AddressMissing}" Value="True">
+                                                        <Setter Property="Text" Value="⚠ ontbreekt"/>
+                                                        <Setter Property="Foreground" Value="#B45309"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTextColumn Header="Stuks" Binding="{Binding ItemCount}" Width="60" ElementStyle="{StaticResource RightCell}"/>
+                        <DataGridTextColumn Header="Totaal" Binding="{Binding Total, StringFormat=C}" Width="100" ElementStyle="{StaticResource RightCell}"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Border>
+            <Border Grid.Column="2" Style="{StaticResource CardBorder}" VerticalAlignment="Top">
+                <StackPanel x:Name="Editor" IsEnabled="False">
+                    <TextBlock x:Name="EditorTitle" Text="Selecteer een overeenkomst" Style="{StaticResource SectionTitle}"/>
+                    <TextBlock Text="Naam verkoper" Style="{StaticResource FieldLabel}"/>
+                    <TextBox x:Name="NameBox"/>
+                    <TextBlock Text="Adres" Style="{StaticResource FieldLabel}"/>
+                    <TextBox x:Name="AddressBox" Height="70" AcceptsReturn="True" TextWrapping="Wrap" VerticalContentAlignment="Top"/>
+                    <TextBlock Text="E-mail" Style="{StaticResource FieldLabel}"/>
+                    <TextBox x:Name="EmailBox"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,16,0,0">
+                        <Button x:Name="SaveButton" Content="Opslaan" Style="{StaticResource PrimaryButton}" Click="Save_Click"/>
+                        <Button Content="Document openen / afdrukken" Click="Open_Click" Margin="0"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </DockPanel>
+</UserControl>

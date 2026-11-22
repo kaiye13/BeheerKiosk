@@ -1,0 +1,58 @@
+<Window x:Class="Boekhouding.Client.Views.ProductEditWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Product bewerken" Width="560" SizeToContent="Height" ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner" FontFamily="Segoe UI" FontSize="13" Background="White">
+    <StackPanel Margin="24">
+        <TextBlock x:Name="Header" Style="{StaticResource SectionTitle}"/>
+        <StackPanel x:Name="SkuPanel" Visibility="Collapsed">
+            <TextBlock Text="SKU (leeg = automatisch)" Style="{StaticResource FieldLabel}"/>
+            <TextBox x:Name="SkuBox"/>
+        </StackPanel>
+        <TextBlock Text="Titel" Style="{StaticResource FieldLabel}"/>
+        <TextBox x:Name="TitleBox"/>
+        <TextBlock Text="Omschrijving" Style="{StaticResource FieldLabel}"/>
+        <TextBox x:Name="DescBox" Height="70" TextWrapping="Wrap" AcceptsReturn="True" VerticalContentAlignment="Top"/>
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition/><ColumnDefinition Width="12"/><ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+            <StackPanel>
+                <TextBlock Text="Merk (vendor)" Style="{StaticResource FieldLabel}"/>
+                <TextBox x:Name="VendorBox"/>
+                <TextBlock Text="Verkoopprijs incl. btw" Style="{StaticResource FieldLabel}"/>
+                <TextBox x:Name="PriceBox"/>
+                <TextBlock Text="Barcode / EAN" Style="{StaticResource FieldLabel}"/>
+                <TextBox x:Name="BarcodeBox"/>
+            </StackPanel>
+            <StackPanel Grid.Column="2">
+                <TextBlock Text="Producttype" Style="{StaticResource FieldLabel}"/>
+                <TextBox x:Name="TypeBox"/>
+                <TextBlock Text="Vergelijkingsprijs (compare at)" Style="{StaticResource FieldLabel}"/>
+                <TextBox x:Name="CompareBox"/>
+                <TextBlock Text="Gewicht (gram)" Style="{StaticResource FieldLabel}"/>
+                <TextBox x:Name="WeightBox"/>
+            </StackPanel>
+        </Grid>
+        <TextBlock Text="Tags (komma-gescheiden)" Style="{StaticResource FieldLabel}"/>
+        <TextBox x:Name="TagsBox"/>
+        <TextBlock Text="Status" Style="{StaticResource FieldLabel}"/>
+        <ComboBox x:Name="StatusBox" Width="160" HorizontalAlignment="Left">
+            <ComboBoxItem Content="active"/>
+            <ComboBoxItem Content="draft"/>
+            <ComboBoxItem Content="archived"/>
+        </ComboBox>
+        <CheckBox x:Name="DigitalBox" Content="Digitaal product (geen verzending)" Margin="0,14,0,0"
+                  Checked="Digital_Changed" Unchecked="Digital_Changed"
+                  ToolTip="Bv. code, download of dienst: Shopify vraagt geen verzendadres, geen voorraad, geen gewicht."/>
+        <CheckBox x:Name="TrackStockBox" Content="Voorraad bijhouden" IsChecked="True" Margin="0,8,0,0"
+                  ToolTip="Uitvinken voor bv. mystery packs of diensten: geen waarschuwing &quot;verkocht zonder voorraad&quot;, btw 21% op de volledige prijs."/>
+        <TextBlock Style="{StaticResource MutedText}" FontSize="12" TextWrapping="Wrap" Margin="20,2,0,0"
+                   Text="Uitvinken voor mystery packs, bundels of diensten zonder eigen aankoop: verkopen worden belast aan 21% op de volledige prijs, zonder voorraadwaarschuwing."/>
+        <CheckBox x:Name="ShopifyBox" Content="Ook in Shopify aanpassen" IsChecked="True" Margin="0,10,0,0" Visibility="Collapsed"/>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+            <Button Content="Annuleren" IsCancel="True"/>
+            <Button x:Name="SaveButton" Content="Opslaan" Style="{StaticResource PrimaryButton}" IsDefault="True" Click="Save_Click" Margin="0"/>
+        </StackPanel>
+    </StackPanel>
+</Window>

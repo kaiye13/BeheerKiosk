@@ -1,0 +1,168 @@
+<UserControl x:Class="Boekhouding.Client.Views.NewPurchaseView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <UserControl.Resources>
+        <!-- Kolommen gedeeld door beide tabbladen -->
+        <Style x:Key="LinesGrid" TargetType="DataGrid" BasedOn="{StaticResource {x:Type DataGrid}}">
+            <Setter Property="IsReadOnly" Value="False"/>
+            <Setter Property="CanUserAddRows" Value="True"/>
+            <Setter Property="CanUserDeleteRows" Value="True"/>
+            <Setter Property="RowHeight" Value="32"/>
+            <Setter Property="MinHeight" Value="160"/>
+        </Style>
+    </UserControl.Resources>
+    <DockPanel>
+        <StackPanel DockPanel.Dock="Top" Margin="0,0,0,12">
+            <TextBlock Text="Nieuwe invoer" Style="{StaticResource PageTitle}"/>
+            <TextBlock Style="{StaticResource MutedText}" TextWrapping="Wrap"
+                       Text="Vul een bestaande SKU in om voorraad bij te zetten bij dat product. Laat SKU leeg (of vul een nieuwe in) om een nieuw product aan te maken met de Shopify-velden."/>
+        </StackPanel>
+
+        <TabControl x:Name="Tabs" Background="White" Padding="16">
+            <!-- ================= MARGEGOEDEREN ================= -->
+            <TabItem Header="  Margegoederen (particulier)  " Padding="10,6">
+                <DockPanel>
+                    <Grid DockPanel.Dock="Top">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/><ColumnDefinition Width="16"/><ColumnDefinition Width="*"/><ColumnDefinition Width="16"/><ColumnDefinition Width="160"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Text="Naam verkoper *" Style="{StaticResource FieldLabel}"/>
+                            <TextBox x:Name="SellerName"/>
+                            <TextBlock Text="E-mail verkoper" Style="{StaticResource FieldLabel}"/>
+                            <TextBox x:Name="SellerEmail"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="Adres verkoper (straat + nr, postcode + gemeente)" Style="{StaticResource FieldLabel}"/>
+                            <TextBox x:Name="SellerAddress" Height="62" AcceptsReturn="True" TextWrapping="Wrap" VerticalContentAlignment="Top" TextChanged="Address_Changed"/>
+                            <TextBlock x:Name="AddressWarning" Foreground="{StaticResource WarnText}" FontSize="12" Margin="0,4,0,0" TextWrapping="Wrap"
+                                       Text="⚠ Zonder adres wordt de overeenkomst als onvolledig gemarkeerd. Vul later aan via Verkoopovereenkomsten."/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="4">
+                            <TextBlock Text="Aankoopdatum" Style="{StaticResource FieldLabel}"/>
+                            <DatePicker x:Name="MarginDate"/>
+                        </StackPanel>
+                    </Grid>
+                    <TextBlock DockPanel.Dock="Top" Text="Opmerkingen" Style="{StaticResource FieldLabel}"/>
+                    <TextBox DockPanel.Dock="Top" x:Name="MarginNotes"/>
+
+                    <DockPanel DockPanel.Dock="Top" Margin="0,16,0,6">
+                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                            <ComboBox x:Name="MarginExisting" Width="300" Margin="0,0,8,0" DisplayMemberPath="Label" ToolTip="Bestaand product kiezen"/>
+                            <Button Content="+ Bestaand product" Click="AddExistingMargin_Click" Margin="0"/>
+                        </StackPanel>
+                        <TextBlock Text="Artikelen (prijs = wat je de particulier betaalt per stuk)" Style="{StaticResource SectionTitle}" VerticalAlignment="Center" Margin="0"/>
+                    </DockPanel>
+
+                    <DockPanel DockPanel.Dock="Bottom" Margin="0,12,0,0">
+                        <Button DockPanel.Dock="Right" x:Name="SaveMargin" Content="Opslaan + verkoopovereenkomst maken" Style="{StaticResource PrimaryButton}" Click="SaveMargin_Click" Margin="0"/>
+                        <CheckBox DockPanel.Dock="Right" x:Name="MarginShopify" IsChecked="True" VerticalAlignment="Center" Margin="0,0,16,0"
+                                  Content="Shopify bijwerken (nieuwe producten als concept, voorraad +)"/>
+                        <TextBlock x:Name="MarginTotal" FontSize="15" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                    </DockPanel>
+
+                    <DataGrid x:Name="MarginLines" Style="{StaticResource LinesGrid}" CellEditEnding="Lines_CellEditEnding">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="SKU" Binding="{Binding Sku}" Width="130"/>
+                            <DataGridTextColumn Header="Artikel *" Binding="{Binding Title}" Width="*"/>
+                            <DataGridTextColumn Header="Aantal" Binding="{Binding Quantity}" Width="60"/>
+                            <DataGridTextColumn Header="Prijs/st betaald" Binding="{Binding UnitCost, Converter={StaticResource Dec}}" Width="105"/>
+                            <DataGridTextColumn Header="Verkoopprijs" Binding="{Binding SalePrice, Converter={StaticResource Dec}}" Width="95"/>
+                            <DataGridTextColumn Header="Merk" Binding="{Binding Vendor}" Width="90"/>
+                            <DataGridTextColumn Header="Type" Binding="{Binding ProductType}" Width="100"/>
+                            <DataGridTextColumn Header="Tags" Binding="{Binding Tags}" Width="110"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+            </TabItem>
+
+            <!-- ================= FACTUURGOEDEREN ================= -->
+            <TabItem x:Name="InvoiceTab" Header="  Factuur (leverancier)  " Padding="10,6">
+                <DockPanel>
+                    <Grid DockPanel.Dock="Top">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="2*"/><ColumnDefinition Width="12"/><ColumnDefinition Width="*"/><ColumnDefinition Width="12"/>
+                            <ColumnDefinition Width="70"/><ColumnDefinition Width="12"/><ColumnDefinition Width="*"/><ColumnDefinition Width="12"/><ColumnDefinition Width="140"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Text="Leverancier *" Style="{StaticResource FieldLabel}"/>
+                            <TextBox x:Name="Supplier"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="Btw-nummer" Style="{StaticResource FieldLabel}"/>
+                            <TextBox x:Name="SupplierVat"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="4">
+                            <TextBlock Text="Land" Style="{StaticResource FieldLabel}"/>
+                            <TextBox x:Name="Country" Text="BE"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="6">
+                            <TextBlock Text="Factuurnummer *" Style="{StaticResource FieldLabel}"/>
+                            <TextBox x:Name="InvoiceNumber"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="8">
+                            <TextBlock Text="Factuurdatum" Style="{StaticResource FieldLabel}"/>
+                            <DatePicker x:Name="InvoiceDate"/>
+                        </StackPanel>
+                    </Grid>
+                    <Grid DockPanel.Dock="Top">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="230"/><ColumnDefinition Width="12"/><ColumnDefinition Width="120"/><ColumnDefinition Width="12"/>
+                            <ColumnDefinition Width="120"/><ColumnDefinition Width="12"/><ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Text="Btw-type" Style="{StaticResource FieldLabel}"/>
+                            <ComboBox x:Name="VatType" SelectionChanged="VatType_Changed"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="Totaal excl. btw" Style="{StaticResource FieldLabel}"/>
+                            <TextBox x:Name="NetAmount" LostFocus="NetAmount_LostFocus"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="4">
+                            <TextBlock Text="Btw-bedrag" Style="{StaticResource FieldLabel}"/>
+                            <TextBox x:Name="VatAmount"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="6">
+                            <TextBlock Text="Factuurbestand (PDF / foto)" Style="{StaticResource FieldLabel}"/>
+                            <DockPanel>
+                                <Button DockPanel.Dock="Right" Content="Bladeren…" Click="Browse_Click" Margin="8,0,0,0"/>
+                                <TextBox x:Name="FilePath" IsReadOnly="True"/>
+                            </DockPanel>
+                        </StackPanel>
+                    </Grid>
+                    <TextBlock DockPanel.Dock="Top" x:Name="VatTypeHint" Style="{StaticResource MutedText}" FontSize="12" Margin="0,6,0,0" TextWrapping="Wrap"/>
+                    <TextBlock DockPanel.Dock="Top" Text="Omschrijving" Style="{StaticResource FieldLabel}"/>
+                    <TextBox DockPanel.Dock="Top" x:Name="InvoiceDescription"/>
+
+                    <DockPanel DockPanel.Dock="Top" Margin="0,16,0,6">
+                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                            <ComboBox x:Name="InvoiceExisting" Width="300" Margin="0,0,8,0" DisplayMemberPath="Label"/>
+                            <Button Content="+ Bestaand product" Click="AddExistingInvoice_Click" Margin="0"/>
+                        </StackPanel>
+                        <TextBlock Text="Artikelen op de factuur (optioneel; leeg = kosten zonder voorraad)" Style="{StaticResource SectionTitle}" VerticalAlignment="Center" Margin="0"/>
+                    </DockPanel>
+
+                    <DockPanel DockPanel.Dock="Bottom" Margin="0,12,0,0">
+                        <Button DockPanel.Dock="Right" x:Name="SaveInvoice" Content="Factuur opslaan" Style="{StaticResource PrimaryButton}" Click="SaveInvoice_Click" Margin="0"/>
+                        <CheckBox DockPanel.Dock="Right" x:Name="InvoiceShopify" IsChecked="True" VerticalAlignment="Center" Margin="0,0,16,0"
+                                  Content="Shopify bijwerken (nieuwe producten als concept, voorraad +)"/>
+                        <TextBlock x:Name="InvoiceTotal" FontSize="15" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                    </DockPanel>
+
+                    <DataGrid x:Name="InvoiceLines" Style="{StaticResource LinesGrid}" CellEditEnding="Lines_CellEditEnding">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="SKU" Binding="{Binding Sku}" Width="130"/>
+                            <DataGridTextColumn Header="Artikel *" Binding="{Binding Title}" Width="*"/>
+                            <DataGridTextColumn Header="Aantal" Binding="{Binding Quantity}" Width="60"/>
+                            <DataGridTextColumn Header="Prijs/st excl. btw" Binding="{Binding UnitCost, Converter={StaticResource Dec}}" Width="115"/>
+                            <DataGridTextColumn Header="Verkoopprijs" Binding="{Binding SalePrice, Converter={StaticResource Dec}}" Width="95"/>
+                            <DataGridTextColumn Header="Merk" Binding="{Binding Vendor}" Width="90"/>
+                            <DataGridTextColumn Header="Type" Binding="{Binding ProductType}" Width="100"/>
+                            <DataGridTextColumn Header="Barcode" Binding="{Binding Barcode}" Width="110"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+            </TabItem>
+        </TabControl>
+    </DockPanel>
+</UserControl>
