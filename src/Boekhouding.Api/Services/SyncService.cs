@@ -75,7 +75,8 @@ public class SyncService(
             }
 
             // Volledige sync: orders met 1 dag overlap, als vangnet voor wijzigingen die de snelle ophaling miste.
-            newOrders = await SyncOrdersAsync(TimeSpan.FromDays(1), messages, ct) ?? 0;
+            // Volledige sync: 2 dagen terug, zodat late wijzigingen (annulaties, tracking, dubbels) ook opgepikt worden.
+            newOrders = await SyncOrdersAsync(TimeSpan.FromDays(2), messages, ct) ?? 0;
 
             if (billit.IsConfigured)
             {
@@ -150,10 +151,11 @@ public class SyncService(
             if (count is not null) await SetLastRunAsync(ShopifyKey, fetchStart, ct);
             await db.SaveChangesAsync(ct);
 
-            if (tiktok.IsConfigured && fetchStart - _lastTikTokAttempt >= TimeSpan.FromSeconds(Math.Max(5, options.Value.TikTokSyncIntervalSeconds)))
+            // De volledige sync (grote overlap) haalt TikTok altijd op; de snelle sync hooguit om de zoveel seconden.
+            if (tiktok.IsConfigured && (overlap >= TimeSpan.FromHours(1) || fetchStart - _lastTikTokAttempt >= TimeSpan.FromSeconds(Math.Max(5, options.Value.TikTokSyncIntervalSeconds))))
             {
                 _lastTikTokAttempt = fetchStart;
-                var ttSince = (await GetLastRunAsync(TikTokKey, ct))?.AddMinutes(-10)
+                var ttSince = (await GetLastRunAsync(TikTokKey, ct))?.Subtract(overlap > TimeSpan.FromMinutes(10) ? overlap : TimeSpan.FromMinutes(10))
                               ?? options.Value.TikTokImportFrom ?? options.Value.ShopifyImportFrom ?? new DateTime(DateTime.Today.Year, 1, 1);
                 var ttCount = await TryAsync(messages, "TikTok Shop", async () =>
                 {
