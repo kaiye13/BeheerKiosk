@@ -202,6 +202,24 @@ public class SyncService(
             match.OrderNumber = $"{tt.OrderNumber} ({match.OrderNumber})";
             viaShopify.Remove(match);
         }
+
+        // TikTok-order staat er al (rechtstreeks binnengekomen) én er kwam nog een kopie via Shopify
+        // (bv. toen TikTok even niet gekoppeld was): de kopie weg, anders telt die verkoop dubbel.
+        // Strenger dan koppelen: zelfde klant en binnen 30 minuten.
+        foreach (var tt in orders.Where(o => known.Contains(o.ExternalId)))
+        {
+            var twin = viaShopify
+                .Where(s => Math.Abs((s.OrderDate - tt.OrderDate).TotalMinutes) <= 30 && Norm(s.CustomerName) == Norm(tt.CustomerName))
+                .OrderBy(s => Math.Abs((s.OrderDate - tt.OrderDate).TotalMinutes))
+                .FirstOrDefault();
+            if (twin is null) continue;
+            log.LogWarning("Dubbele TikTok-order via Shopify verwijderd: {Shopify} (= TikTok {Tt})", twin.OrderNumber, tt.ExternalId);
+            await ReleaseStockAsync(twin, ct);
+            foreach (var c in await db.Complaints.Where(c => c.SalesOrderId == twin.Id).ToListAsync(ct)) c.SalesOrderId = null;
+            db.SalesOrderLines.RemoveRange(await db.SalesOrderLines.Where(l => l.SalesOrderId == twin.Id).ToListAsync(ct));
+            db.SalesOrders.Remove(twin);
+            viaShopify.Remove(twin);
+        }
         await db.SaveChangesAsync(ct);
     }
 

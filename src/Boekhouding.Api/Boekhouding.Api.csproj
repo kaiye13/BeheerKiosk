@@ -34,4 +34,8 @@
     <Content Update="appsettings.Production.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Never" />
   </ItemGroup>
 
+  <!-- Startgegevens voor een nieuwe server (TikTok-tokens, factuur-PDF's): komen mee in de publish. -->
+  <ItemGroup>
+    <None Include="SeedData\**\*" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
 </Project>

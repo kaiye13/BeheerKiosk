@@ -1,0 +1,18 @@
+{
+  "data": {
+    "access_token": "GCP_kA1AWwAAAAB2SnodZZ5zC2lynzMXIpTfJo0yYzjkv1_6cypxXRW5Zt8njY7WxQC9bn7Tud0JfJ-XAtMWXnAoUs9ldCHcoNwsTrTG56nGDDe4eRCaQE8sQ5VOw6oTZeaxUkGjdo27mbU",
+    "access_token_expire_in": 1795951148,
+    "refresh_token": "GCP_4wiDUwAAAAAr6kspNGSLSlJlj_aX8vzk92x2NYUHKmVPTv4sSUM6uHGjsl958GTKUPwnYHTnvYU",
+    "refresh_token_expire_in": 4906995820,
+    "open_id": "u0pXBgAAAABlgVU0WxjiKquJSeoLwO7HaDIsnwr5FGOlCeAsprOViw",
+    "seller_name": "If-collect",
+    "seller_base_region": "BE",
+    "user_type": 0,
+    "granted_scopes": [
+      "seller.shop.info",
+      "seller.order.info",
+      "seller.authorization.info",
+      "seller.fulfillment.basic"
+    ]
+  }
+}

@@ -29,6 +29,10 @@ var uploadDir = Path.Combine(dataDir, "uploads");
 Directory.CreateDirectory(uploadDir);
 
 builder.Services.AddSingleton(new AppPaths(dataDir, uploadDir));
+
+// Startgegevens die met de deploy meekomen (SeedData naast de exe): TikTok-tokens en factuur-PDF's.
+// Enkel wat nog ontbreekt wordt gekopieerd: bestaande bestanden (bv. door de server vernieuwde tokens) blijven.
+SeedData.CopyMissing(Path.Combine(AppContext.BaseDirectory, "SeedData"), dataDir);
 // Database: met ConnectionStrings:Default (Azure: Verbindingsreeksen → "Default", type SQLAzure) Azure SQL,
 // anders het SQLite-bestand in de datamap.
 var sqlConnection = builder.Configuration.GetConnectionString("Default");
