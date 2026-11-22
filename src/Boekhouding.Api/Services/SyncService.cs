@@ -29,6 +29,8 @@ public class SyncService(
     public const string GoLiveKey = "go-live";
     public const string TikTokKey = "tiktok";
     private static DateTime _lastTikTokAttempt = DateTime.MinValue;
+    /// <summary>Enkel voor tests: TikTok meteen weer laten ophalen.</summary>
+    internal static void ResetTikTokThrottle() => _lastTikTokAttempt = DateTime.MinValue;
 
     // Achtergrondsync en de knop "Synchroniseer nu" mogen niet tegelijk lopen.
     private static readonly SemaphoreSlim Gate = new(1, 1);
@@ -207,11 +209,15 @@ public class SyncService(
 
         // TikTok-order staat er al (rechtstreeks binnengekomen) én er kwam nog een kopie via Shopify
         // (bv. toen TikTok even niet gekoppeld was): de kopie weg, anders telt die verkoop dubbel.
-        // Strenger dan koppelen: zelfde klant en binnen 30 minuten.
+        // Strenger dan koppelen: zelfde klant, en binnen 30 minuten óf zelfde bedrag binnen 6 uur
+        // (Shopify noteert het bestelmoment, TikTok het betaalmoment: dat kan een uur of meer schelen).
         foreach (var tt in orders.Where(o => known.Contains(o.ExternalId)))
         {
+            var ttTotal = tt.Lines.Sum(l => l.UnitPriceIncl * l.Quantity) + tt.ShippingIncl;
             var twin = viaShopify
-                .Where(s => Math.Abs((s.OrderDate - tt.OrderDate).TotalMinutes) <= 30 && Norm(s.CustomerName) == Norm(tt.CustomerName))
+                .Where(s => Norm(s.CustomerName) == Norm(tt.CustomerName)
+                            && (Math.Abs((s.OrderDate - tt.OrderDate).TotalMinutes) <= 30
+                                || (Math.Abs((s.OrderDate - tt.OrderDate).TotalHours) <= 6 && Math.Abs(s.TotalIncl - ttTotal) <= 0.10m)))
                 .OrderBy(s => Math.Abs((s.OrderDate - tt.OrderDate).TotalMinutes))
                 .FirstOrDefault();
             if (twin is null) continue;

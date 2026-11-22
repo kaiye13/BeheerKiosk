@@ -19,6 +19,7 @@ public sealed class TikTokDuplicateTests : IDisposable
         _conn.Open();
         _db = new AppDbContext(new DbContextOptionsBuilder<AppDbContext>().UseSqlite(_conn).Options);
         _db.Database.EnsureCreated();
+        SyncService.ResetTikTokThrottle();
     }
 
     public void Dispose()
@@ -44,6 +45,30 @@ public sealed class TikTokDuplicateTests : IDisposable
 
     private static ExternalOrder Order(string id, string number, DateTime at, string name, decimal price) =>
         new(SalesChannel.TikTokShop, id, number, at, name, null, 0m, "paid", [new ExternalOrderLine("X", "Booster", 1, price)], "TikTok");
+
+    [Fact]
+    public async Task Copy_an_hour_earlier_with_same_customer_and_amount_is_removed_different_amount_stays()
+    {
+        var paid = DateTime.Now.AddHours(-3);
+        var tiktokOrder = Order("577000000000000116", "TT 577000000000000116", paid, "elien borms", 115.99m);
+        var sync = new SyncService(_db, new NoShopify(), new FakeTikTok(tiktokOrder), new DummyWooCommerceClient(), new DummyBillitClient(),
+            new StockAllocator(_db), Options.Create(new IntegrationOptions { UseDummyData = false, TikTokSyncIntervalSeconds = 5 }),
+            Options.Create(new StreamOptions()), new ComplaintService(_db, new DummyMailboxClient(), NullLogger<ComplaintService>.Instance),
+            new ShopActivityService(_db), TestServices.ShopifyProducts(_db), TestServices.Paths, NullLogger<SyncService>.Instance);
+
+        // Shopify: besteld 1 u vóór de TikTok-betaling, zelfde bedrag → kopie. Andere bestelling, ander bedrag → blijft.
+        await sync.ImportOrdersAsync([
+            tiktokOrder,
+            Order("gid://shopify/Order/1383", "#KIOSK1383", paid.AddHours(-1), "Elien Borms", 115.99m),
+            Order("gid://shopify/Order/1384", "#KIOSK1384", paid.AddHours(-1), "Elien Borms", 39.98m),
+        ], historical: false);
+        await _db.SaveChangesAsync();
+
+        await sync.RunOrdersAsync();
+
+        var numbers = await _db.SalesOrders.Select(o => o.OrderNumber).OrderBy(n => n).ToListAsync();
+        Assert.Equal(["#KIOSK1384", "TT 577000000000000116"], numbers);
+    }
 
     [Fact]
     public async Task Copy_via_shopify_of_an_existing_tiktok_order_is_removed_other_orders_stay()
