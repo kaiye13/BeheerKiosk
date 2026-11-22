@@ -6,8 +6,16 @@ namespace Boekhouding.Client.Services;
 /// <summary>Instellingen per pc, in %AppData%\ShipRipperBoekhouding\client.json.</summary>
 public class ClientSettings
 {
-    public string ServerUrl { get; set; } = "http://localhost:5080";
-    public string ApiKey { get; set; } = "verander-mij-naar-iets-geheims";
+    /// <summary>De live server op Azure: staat standaard ingevuld, gebruikers hoeven niets in te stellen.</summary>
+    public const string DefaultServerUrl = "https://tcgkiosk-gvbtctfjczamdref.belgiumcentral-01.azurewebsites.net";
+    public const string DefaultApiKey = "SpecialKateIsTheBest";
+
+    // Oude standaardwaarden (lokale server): wie die nog heeft, gaat automatisch naar de live server.
+    private const string OldLocalServerUrl = "http://localhost:5080";
+    private const string OldExampleApiKey = "verander-mij-naar-iets-geheims";
+
+    public string ServerUrl { get; set; } = DefaultServerUrl;
+    public string ApiKey { get; set; } = DefaultApiKey;
 
     // ---- Rip-tool (localhost-pagina in het stream-dashboard) ----
     /// <summary>Leeg = de rip-wachtrij op deze pc (<see cref="DefaultRipToolUrl"/>).</summary>
@@ -48,6 +56,25 @@ public class ClientSettings
                 settings = JsonSerializer.Deserialize<ClientSettings>(File.ReadAllText(FilePath)) ?? settings;
         }
         catch (JsonException) { }
+
+        // Bestaande installaties die nog op de lokale server of de voorbeeldsleutel stonden → live server.
+        // Een zelf ingevuld ander adres (bv. een eigen testserver) blijft staan.
+        var migrated = false;
+        if (string.IsNullOrWhiteSpace(settings.ServerUrl) || settings.ServerUrl.TrimEnd('/') == OldLocalServerUrl)
+        {
+            settings.ServerUrl = DefaultServerUrl;
+            migrated = true;
+        }
+        if (string.IsNullOrWhiteSpace(settings.ApiKey) || settings.ApiKey == OldExampleApiKey
+            || (migrated && settings.ApiKey != DefaultApiKey))
+        {
+            settings.ApiKey = DefaultApiKey;
+            migrated = true;
+        }
+        if (migrated && File.Exists(FilePath))
+        {
+            try { settings.Save(); } catch (IOException) { } catch (UnauthorizedAccessException) { }
+        }
 
         // Voor testen naast een draaiende installatie: andere server via omgevingsvariabelen (wordt niet opgeslagen).
         if (Environment.GetEnvironmentVariable("SHIPRIPPER_SERVER_URL") is { Length: > 0 } url) settings.ServerUrl = url;

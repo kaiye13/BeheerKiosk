@@ -8,7 +8,7 @@
             <TabItem Header="  Server  " Padding="8,5">
                 <StackPanel>
                     <TextBlock Style="{StaticResource MutedText}" TextWrapping="Wrap"
-                               Text="Adres van de pc waarop de Boekhouding-server draait, bv. http://192.168.1.50:5080. Op de server-pc zelf: http://localhost:5080."/>
+                               Text="Adres van de Boekhouding-server. Standaard de live server op Azure (al ingevuld); enkel aanpassen voor een eigen testserver."/>
                     <TextBlock Text="Server-adres" Style="{StaticResource FieldLabel}"/>
                     <TextBox x:Name="UrlBox"/>
                     <TextBlock Text="API-sleutel (Security:ApiKey in appsettings.json van de server)" Style="{StaticResource FieldLabel}"/>
