@@ -46,10 +46,16 @@ jobs:
       contents: read #This is required for actions/checkout
 
     steps:
+      # Enkel de map azure/ (instellingen); de app zelf komt uit het build-artefact.
+      - uses: actions/checkout@v5
+        with:
+          sparse-checkout: azure
+
       - name: Download artifact from build job
         uses: actions/download-artifact@v5
         with:
           name: .net-app
+          path: app
 
       - name: Login to Azure
         uses: azure/login@v2
@@ -58,12 +64,32 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_4BE8039E5A424D70B8AE012B795FE245 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_F5D4A6FA85B741009F38005F9AAA3F55 }}
 
+      # Instellingen uit de repo toepassen: azure/app-settings.json (Omgevingsvariabelen → App-instellingen)
+      # en azure/connection-strings.json (→ Verbindingsreeksen). Andere instellingen in Azure blijven staan.
+      # Stream__PublicUrl wordt het eigen https-adres van de web app. Waarden komen niet in het logboek.
+      - name: Apply app settings
+        run: |
+          rg=$(az webapp list --query "[?name=='tcgkiosk'].resourceGroup | [0]" -o tsv)
+          [ -n "$rg" ] || { echo "::error::Web app tcgkiosk niet gevonden met deze Azure-koppeling."; exit 1; }
+          host=$(az webapp show --name tcgkiosk --resource-group "$rg" --query defaultHostName -o tsv)
+          az webapp config appsettings set --name tcgkiosk --resource-group "$rg" --settings @azure/app-settings.json -o none
+          az webapp config appsettings set --name tcgkiosk --resource-group "$rg" --settings "Stream__PublicUrl=https://$host" -o none
+          jq -c '.[]' azure/connection-strings.json | while read -r cs; do
+            name=$(jq -r .name <<<"$cs"); type=$(jq -r .type <<<"$cs"); value=$(jq -r .value <<<"$cs")
+            echo "::add-mask::$value"
+            az webapp config connection-string set --name tcgkiosk --resource-group "$rg" \
+              --connection-string-type "$type" --settings "$name=$value" -o none
+          done
+          echo "Instellingen toegepast. Adres: https://$host"
+
       # Veiligheid: niet online zetten zolang de app-instellingen ontbreken. Zonder eigen API-sleutel
       # geldt de voorbeeldsleutel uit de repo (te raden); zonder datamap komt de database in een map
       # die bij elke herstart gewist wordt. Waarden worden niet getoond, enkel of ze ingevuld zijn.
       - name: Check app settings
         run: |
           rg=$(az webapp list --query "[?name=='tcgkiosk'].resourceGroup | [0]" -o tsv)
+          dir=$(az webapp config appsettings list --name tcgkiosk --resource-group "$rg" --query "[?name=='Storage__DataDirectory'].value | [0]" -o tsv)
+          case "$dir" in *Server=*|*Password=*) echo "::error::Storage__DataDirectory moet een map zijn (bv. %HOME%\\data\\ShipRipperBoekhouding), geen verbindingsreeks."; exit 1;; esac
           names=$(az webapp config appsettings list --name tcgkiosk --resource-group "$rg" --query "[?value!=''].name" -o tsv)
           missing=""
           for s in Security__ApiKey Storage__DataDirectory WEBSITE_TIME_ZONE; do
@@ -85,4 +111,4 @@ jobs:
         with:
           app-name: 'tcgkiosk'
           slot-name: 'Production'
-          package: .
+          package: app

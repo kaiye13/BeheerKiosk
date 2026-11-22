@@ -1,0 +1,17 @@
+[
+  {
+    "name": "Security__ApiKey",
+    "value": "SpecialKateIsTheBest",
+    "slotSetting": false
+  },
+  {
+    "name": "Storage__DataDirectory",
+    "value": "%HOME%\\data\\ShipRipperBoekhouding",
+    "slotSetting": false
+  },
+  {
+    "name": "WEBSITE_TIME_ZONE",
+    "value": "Romance Standard Time",
+    "slotSetting": false
+  }
+]
