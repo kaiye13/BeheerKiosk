@@ -1,5 +1,6 @@
-# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
-# More GitHub Actions for Azure: https://github.com/Azure/actions
+# Bouwt en test de boekhoudserver (src/Boekhouding.Api) en zet hem op Azure App Service "tcgkiosk".
+# De boekhoud-app (WPF, enkel Windows) wordt hier niet gebouwd: die verdeel je als exe (publish.ps1).
+# Docs: https://github.com/Azure/webapps-deploy
 
 name: Build and deploy ASP.Net Core app to Azure Web App - tcgkiosk
 
@@ -18,22 +19,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up .NET Core
+      - name: Set up .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.x'
 
-      - name: Build with dotnet
-        run: dotnet build --configuration Release
+      # Eerst de tests: een kapotte versie komt niet online.
+      - name: Test
+        run: dotnet test tests/Boekhouding.Tests/Boekhouding.Tests.csproj --configuration Release
 
-      - name: dotnet publish
-        run: dotnet publish -c Release -o ${{env.DOTNET_ROOT}}/myapp
+      # Enkel de server publiceren (niet de WPF-app).
+      - name: Publish server
+        run: dotnet publish src/Boekhouding.Api/Boekhouding.Api.csproj --configuration Release --output ${{ runner.temp }}/myapp
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: .net-app
-          path: ${{env.DOTNET_ROOT}}/myapp
+          path: ${{ runner.temp }}/myapp
 
   deploy:
     runs-on: ubuntu-latest
@@ -47,13 +50,30 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: .net-app
-      
+
       - name: Login to Azure
         uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_D5A0E1DBF75E4CC5B271F4658265C09F }}
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_4BE8039E5A424D70B8AE012B795FE245 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_F5D4A6FA85B741009F38005F9AAA3F55 }}
+
+      # Veiligheid: niet online zetten zolang de app-instellingen ontbreken. Zonder eigen API-sleutel
+      # geldt de voorbeeldsleutel uit de repo (te raden); zonder datamap komt de database in een map
+      # die bij elke herstart gewist wordt. Waarden worden niet getoond, enkel of ze ingevuld zijn.
+      - name: Check app settings
+        run: |
+          rg=$(az webapp list --query "[?name=='tcgkiosk'].resourceGroup | [0]" -o tsv)
+          names=$(az webapp config appsettings list --name tcgkiosk --resource-group "$rg" --query "[?value!=''].name" -o tsv)
+          missing=""
+          for s in Security__ApiKey Storage__DataDirectory WEBSITE_TIME_ZONE; do
+            echo "$names" | grep -qx "$s" || missing="$missing $s"
+          done
+          if [ -n "$missing" ]; then
+            echo "::error::Zet eerst deze app-instellingen in Azure (Web app → Instellingen → Omgevingsvariabelen):$missing"
+            exit 1
+          fi
+          echo "App-instellingen in orde."
 
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
@@ -62,4 +82,3 @@ jobs:
           app-name: 'tcgkiosk'
           slot-name: 'Production'
           package: .
-          
